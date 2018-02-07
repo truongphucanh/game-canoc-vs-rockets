@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Flappy Bird with HTML5</title>
+    <style>
+        canvas
+        {
+            background-color:#f1f1f1;
+            border: 1px solid #d3d3d3;
+        }
+        p{color: darkgreen}
+    </style>
+</head>
+<body onload="startGame()">
+    <script>
+
+        var player;
+        var rockets = new Array();
+        function startGame()
+        {
+            gameView.load();
+            var width = 80;
+            var height = 80;
+            var x = 10;
+            var y = (gameView.canvas.height - height) * 0.5;
+            player = new component("../res/textures/grayscale/player.png", x, y, width, height);
+            setInterval(spawnRocket, 500);
+        }
+        
+        function gameOver()
+        {
+            clearInterval(gameView.interval);
+            document.getElementById("Status").innerHTML = "Game Over";
+        }
+
+        var gameView = 
+        {
+            canvas :  document.createElement("canvas"),
+            load : function()
+            {
+                this.scale = 0.8;
+                this.canvas.width = 640 * this.scale;
+                this.canvas.height = 960 * this.scale;
+                this.context = this.canvas.getContext("2d");
+                document.body.insertBefore(this.canvas, document.body.firstChild);
+                this.interval = setInterval(update, 20);
+                window.addEventListener("keydown", function(e)
+                {
+                    if (e.keyCode == 32)
+                    {
+                        player.speedY = -5;
+                        player.gravitySpeed = 0;
+                    }
+                });
+                window.addEventListener("keyup", function(e)
+                {
+                    if (e.keyCode == 32)
+                    {
+                        player.speedY = 0;
+                        player.gravitySpeed = 2;
+                    }
+                });
+            },
+            clear : function()
+            {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+            }
+        }
+
+        function component(image, x, y, width, height)
+        {
+            this.image = new Image();
+            this.image.src = image;
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.speedX = 0;
+            this.speedY = 0;
+            this.gravity = 0.05;
+            this.gravitySpeed = 2;
+
+            this.update = function()
+            {
+                this.move();
+                ctx = gameView.context;
+                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                if (this.falled())
+                {
+                    gameOver();
+                }
+            }
+
+            this.move = function()
+            {
+                this.gravitySpeed += this.gravity;
+                this.x += this.speedX;
+                this.y += this.speedY + this.gravitySpeed;
+            }
+
+            this.falled = function()
+            {
+                return (this.y + this.height) >= gameView.canvas.height;
+            }
+        }
+
+        function update()
+        {
+            gameView.clear();
+            player.update();
+            rockets.forEach(element => {
+                element.update();
+            });
+        }
+        
+        function rocket(x, y, width, height)
+        {
+            this.image = new Image();
+            this.image.src = "../res/textures/grayscale/rocket.png";
+            this.x = x;
+            this.y = y;
+            this.speed = 7;
+            this.width =  width;
+            this.height = height;
+            this.update = function()
+            {
+                this.speed += 0.1;
+                this.x -= this.speed;
+                ctx = gameView.context;
+                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                if (this.x + this.width <= 0)
+                {
+                    delete this;
+                    document.getElementById("Status").innerHTML = rockets.length;
+                }
+            }
+        }
+
+        function spawnRocket()
+        {
+            var width = 80;
+            var height = 80;
+            var x = gameView.canvas.width;
+            var y1 = rand(player.y - 200, player.y +  200);
+            var r1 = new rocket(x, y1, width, height);
+            rockets.push(r1);
+        }
+
+        function rand(min, max)
+        {
+            return Math.random() * (max - min) + min;
+        }
+
+    </script>
+    <p id="Status">Status</p>
+</body>
+</html>
